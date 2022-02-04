@@ -143,6 +143,8 @@ type ApplicationConfig struct {
 		Buildpacks []string
 	}
 
+	EnvGroup string
+
 	Values map[string]interface{}
 }
 
@@ -310,6 +312,7 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 		LocalDockerfile: appConfig.Build.Dockerfile,
 		OverrideTag:     tag,
 		Method:          deploy.DeployBuildType(method),
+		EnvGroup:        appConfig.EnvGroup,
 	}
 
 	if shouldCreate {

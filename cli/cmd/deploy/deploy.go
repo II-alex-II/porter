@@ -161,6 +161,35 @@ func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, err
 		return nil, err
 	}
 
+	if err == nil && d.opts.EnvGroup != "" {
+		envGroupName, envGroupVersion, err := getEnvGroupNameVersion(d.opts.EnvGroup)
+
+		if err != nil {
+			return nil, err
+		}
+
+		envGroup, err := d.client.GetEnvGroup(
+			context.Background(),
+			d.opts.ProjectID,
+			d.opts.ClusterID,
+			d.opts.Namespace,
+			&types.GetEnvGroupRequest{
+				Name:    envGroupName,
+				Version: envGroupVersion,
+			},
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		for k, v := range envGroup.Variables {
+			if _, ok := env[k]; !ok {
+				env[k] = v
+			}
+		}
+	}
+
 	// add additional env based on options
 	for key, val := range d.opts.SharedOpts.AdditionalEnv {
 		env[key] = val
