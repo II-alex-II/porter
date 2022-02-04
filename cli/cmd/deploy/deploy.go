@@ -137,7 +137,10 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 
 	deployAgent.tag = opts.OverrideTag
 
-	return deployAgent, nil
+	err = coalesceEnvGroups(deployAgent.client, deployAgent.opts.ProjectID, deployAgent.opts.ClusterID,
+		deployAgent.opts.Namespace, deployAgent.opts.EnvGroups, deployAgent.release.Config)
+
+	return deployAgent, err
 }
 
 type GetBuildEnvOpts struct {
@@ -159,35 +162,6 @@ func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, err
 
 	if err != nil {
 		return nil, err
-	}
-
-	if err == nil && d.opts.EnvGroup != "" {
-		envGroupName, envGroupVersion, err := getEnvGroupNameVersion(d.opts.EnvGroup)
-
-		if err != nil {
-			return nil, err
-		}
-
-		envGroup, err := d.client.GetEnvGroup(
-			context.Background(),
-			d.opts.ProjectID,
-			d.opts.ClusterID,
-			d.opts.Namespace,
-			&types.GetEnvGroupRequest{
-				Name:    envGroupName,
-				Version: envGroupVersion,
-			},
-		)
-
-		if err != nil {
-			return nil, err
-		}
-
-		for k, v := range envGroup.Variables {
-			if _, ok := env[k]; !ok {
-				env[k] = v
-			}
-		}
 	}
 
 	// add additional env based on options
